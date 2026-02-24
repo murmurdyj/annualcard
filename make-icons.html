@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Generate Icons</title></head>
+<body>
+<canvas id="c192" width="192" height="192"></canvas>
+<canvas id="c512" width="512" height="512"></canvas>
+<script>
+function drawIcon(canvas) {
+  const s = canvas.width;
+  const ctx = canvas.getContext('2d');
+  // background
+  const bg = ctx.createLinearGradient(0, 0, s, s);
+  bg.addColorStop(0, '#0d1829');
+  bg.addColorStop(1, '#050b18');
+  ctx.fillStyle = bg;
+  ctx.beginPath();
+  ctx.roundRect(0, 0, s, s, s * 0.22);
+  ctx.fill();
+  // glow
+  const glow = ctx.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
+  glow.addColorStop(0, 'rgba(96,165,250,0.25)');
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, s, s);
+  // star ✦
+  ctx.save();
+  ctx.translate(s/2, s/2);
+  const grad = ctx.createLinearGradient(-s*0.3, -s*0.3, s*0.3, s*0.3);
+  grad.addColorStop(0, '#93c5fd');
+  grad.addColorStop(1, '#c4b5fd');
+  ctx.fillStyle = grad;
+  ctx.shadowColor = '#60a5fa';
+  ctx.shadowBlur = s * 0.1;
+  ctx.font = `bold ${s*0.52}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('✦', 0, s*0.03);
+  ctx.restore();
+}
+
+['c192','c512'].forEach(id => {
+  const c = document.getElementById(id);
+  drawIcon(c);
+  const a = document.createElement('a');
+  a.href = c.toDataURL('image/png');
+  a.download = `icon-${c.width}.png`;
+  a.textContent = `Download icon-${c.width}.png`;
+  a.style = 'display:block;margin:8px;color:blue;';
+  document.body.appendChild(a);
+});
+</script>
+</body>
+</html>

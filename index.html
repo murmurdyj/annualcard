@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Night Sky" />
+  <meta name="theme-color" content="#050b18" />
+  <title>Night Sky — 扣款管理</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <!-- iOS home screen icons -->
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+    :root {
+      --bg: #050b18;
+      --surface: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.09);
+      --text: #e2eaf8;
+      --muted: #475569;
+      --dim: #334155;
+      --blue: #60a5fa;
+      --purple: #a78bfa;
+      --gold: #fbbf24;
+      --green: #34d399;
+      --red: #f87171;
+      --orange: #fb923c;
+      --cyan: #22d3ee;
+      --pink: #e879f9;
+      --safe-top: env(safe-area-inset-top);
+      --safe-bottom: env(safe-area-inset-bottom);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', -apple-system, sans-serif;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ── Star field ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 8% 12%, rgba(255,255,255,.7) 0%, transparent 100%),
+        radial-gradient(1px 1px at 22% 52%, rgba(255,255,255,.45) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 38% 8%, rgba(255,255,255,.8) 0%, transparent 100%),
+        radial-gradient(1px 1px at 54% 68%, rgba(255,255,255,.4) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 69% 28%, rgba(255,255,255,.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 81% 82%, rgba(255,255,255,.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 91% 44%, rgba(255,255,255,.7) 0%, transparent 100%),
+        radial-gradient(1px 1px at 14% 78%, rgba(255,255,255,.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 61% 48%, rgba(255,255,255,.4) 0%, transparent 100%),
+        radial-gradient(2px 2px at 33% 33%, rgba(180,200,255,.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 76% 18%, rgba(255,255,255,.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 4%  94%, rgba(255,255,255,.35) 0%, transparent 100%),
+        radial-gradient(1px 1px at 48% 22%, rgba(255,255,255,.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 17% 38%, rgba(255,255,255,.4) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 92% 70%, rgba(200,220,255,.5) 0%, transparent 100%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── Aurora ── */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 40% at 20% 0%, rgba(99,179,237,.07) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 35% at 80% 5%, rgba(167,139,250,.06) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 30% at 50% 100%, rgba(56,189,248,.05) 0%, transparent 60%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── App shell ── */
+    #app {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      max-width: 430px; margin: 0 auto;
+      z-index: 1;
+      padding-top: var(--safe-top);
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 16px 20px 0;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .logo { display: flex; align-items: center; gap: 8px; }
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 0 16px rgba(96,165,250,.4);
+    }
+    .logo-text {
+      font-size: 17px; font-weight: 600; letter-spacing: -.3px;
+      background: linear-gradient(90deg, #93c5fd, #c4b5fd);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .date-pill {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 20px; padding: 5px 12px;
+      font-size: 12px; font-family: 'DM Mono', monospace;
+      color: #94a3b8; letter-spacing: .3px;
+    }
+
+    /* ── Tab bar (top) ── */
+    .tabs {
+      display: flex; margin: 12px 20px 0;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px; padding: 4px; gap: 2px;
+      flex-shrink: 0;
+    }
+    .tab {
+      flex: 1; padding: 8px 0; border: none;
+      background: transparent; color: #64748b;
+      font-size: 13px; font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      border-radius: 10px; cursor: pointer; transition: all .2s;
+    }
+    .tab.active {
+      background: linear-gradient(135deg, rgba(96,165,250,.2), rgba(167,139,250,.15));
+      color: #93c5fd;
+      box-shadow: 0 0 12px rgba(96,165,250,.15);
+      border: 1px solid rgba(96,165,250,.2);
+    }
+
+    /* ── Scroll content ── */
+    .content {
+      flex: 1; overflow-y: auto; overflow-x: hidden;
+      padding: 14px 20px;
+      padding-bottom: calc(80px + var(--safe-bottom));
+      -webkit-overflow-scrolling: touch;
+    }
+    .content::-webkit-scrollbar { width: 0; }
+
+    /* ── Glass card ── */
+    .glass {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px; padding: 20px;
+      backdrop-filter: blur(20px);
+      margin-bottom: 12px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .glass.glow-blue {
+      border-color: rgba(96,165,250,.25);
+      box-shadow: 0 0 30px rgba(96,165,250,.1), inset 0 0 30px rgba(96,165,250,.03);
+    }
+    .glass.glow-alert {
+      border-color: rgba(251,191,36,.35);
+      box-shadow: 0 0 24px rgba(251,191,36,.1), inset 0 0 20px rgba(251,191,36,.03);
+    }
+
+    /* ── Typography helpers ── */
+    .label {
+      font-size: 11px; text-transform: uppercase;
+      letter-spacing: 1.2px; color: var(--muted);
+      font-weight: 500; margin-bottom: 6px;
+    }
+    .sec-title {
+      font-size: 11px; text-transform: uppercase;
+      letter-spacing: 1.5px; color: var(--dim);
+      font-weight: 600; margin: 18px 0 10px;
+    }
+
+    /* ── Today pulse dot ── */
+    .pulse-dot {
+      width: 8px; height: 8px;
+      background: var(--gold); border-radius: 50%;
+      box-shadow: 0 0 8px rgba(251,191,36,.6);
+      animation: pulse 2s infinite; flex-shrink: 0;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:.6; transform:scale(.8); }
+    }
+
+    /* ── Card badge ── */
+    .card-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      border-radius: 7px; padding: 2px 8px;
+      font-size: 11px; font-weight: 600; letter-spacing: .2px;
+      white-space: nowrap;
+    }
+    .card-badge-dot {
+      width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+    }
+
+    /* ── List row ── */
+    .list-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 16px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 16px; margin-bottom: 8px;
+      transition: all .2s; cursor: pointer;
+    }
+    .list-row:active { transform: scale(.98); opacity: .85; }
+    .row-icon {
+      width: 38px; height: 38px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .icon-m { background: rgba(96,165,250,.12); }
+    .icon-y { background: rgba(167,139,250,.12); }
+    .row-info { flex: 1; min-width: 0; }
+    .row-name {
+      font-size: 14px; font-weight: 500; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .row-meta {
+      display: flex; align-items: center; gap: 6px;
+      margin-top: 4px; flex-wrap: wrap;
+    }
+    .row-date { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+    .row-right { text-align: right; flex-shrink: 0; }
+    .row-amount { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; color: var(--text); }
+    .cycle-badge {
+      display: inline-block; font-size: 10px;
+      padding: 2px 7px; border-radius: 6px; font-weight: 600; letter-spacing: .3px;
+    }
+    .badge-m { background: rgba(96,165,250,.12); color: var(--blue); border: 1px solid rgba(96,165,250,.2); }
+    .badge-y { background: rgba(167,139,250,.12); color: var(--purple); border: 1px solid rgba(167,139,250,.2); }
+
+    /* ── Summary grid ── */
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .mini-card {
+      background: var(--surface); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px; padding: 16px; text-align: center;
+    }
+    .mini-val { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; color: #93c5fd; }
+    .mini-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Card bar chart ── */
+    .card-sum-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .card-sum-row:last-child { margin-bottom: 0; }
+    .bar-wrap { flex: 1; height: 3px; background: rgba(255,255,255,.06); border-radius: 2px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 2px; transition: width .4s ease; }
+    .bar-amount { font-family: 'DM Mono', monospace; font-size: 12px; color: #64748b; white-space: nowrap; min-width: 84px; text-align: right; }
+
+    /* ── Search ── */
+    .search-bar {
+      width: 100%;
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 14px; padding: 11px 16px;
+      color: var(--text); font-size: 14px;
+      font-family: 'DM Sans', sans-serif; outline: none;
+      transition: border-color .2s; margin-bottom: 12px;
+    }
+    .search-bar::placeholder { color: var(--dim); }
+    .search-bar:focus { border-color: rgba(96,165,250,.4); }
+
+    /* ── Card filter strip ── */
+    .card-strip { display: flex; gap: 7px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 2px; }
+    .card-strip::-webkit-scrollbar { height: 0; }
+    .cf-btn {
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.04); color: #64748b;
+      font-size: 12px; font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      border-radius: 20px; padding: 5px 13px;
+      cursor: pointer; white-space: nowrap;
+      transition: all .2s; flex-shrink: 0;
+      display: flex; align-items: center; gap: 5px;
+    }
+
+    /* ── Form ── */
+    .form-group { margin-bottom: 16px; }
+    .form-label {
+      display: block; font-size: 11px; text-transform: uppercase;
+      letter-spacing: 1.2px; color: var(--muted); font-weight: 600; margin-bottom: 8px;
+    }
+    .form-input, .form-select {
+      width: 100%; background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.1); border-radius: 12px;
+      padding: 11px 14px; color: var(--text); font-size: 14px;
+      font-family: 'DM Sans', sans-serif; outline: none;
+      transition: border-color .2s; appearance: none;
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: rgba(96,165,250,.5);
+      box-shadow: 0 0 0 3px rgba(96,165,250,.08);
+    }
+    .form-input::placeholder { color: var(--dim); }
+    .form-select { background-color: #0d1829; }
+
+    .cycle-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .cycle-btn {
+      padding: 12px; border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.1);
+      background: transparent; color: #64748b;
+      font-size: 13px; font-weight: 500;
+      font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all .2s;
+    }
+    .cycle-btn.active-m { background: rgba(96,165,250,.12); border-color: rgba(96,165,250,.4); color: var(--blue); }
+    .cycle-btn.active-y { background: rgba(167,139,250,.12); border-color: rgba(167,139,250,.4); color: var(--purple); }
+
+    /* ── Card selector trigger ── */
+    .card-trigger {
+      width: 100%; background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.1); border-radius: 12px;
+      padding: 11px 14px; color: var(--text); font-size: 14px;
+      font-family: 'DM Sans', sans-serif; cursor: pointer;
+      transition: all .2s; display: flex; align-items: center; justify-content: space-between;
+      text-align: left;
+    }
+    .card-trigger:focus { border-color: rgba(96,165,250,.5); outline: none; }
+    .card-trigger-placeholder { color: var(--dim); }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      width: 100%; padding: 14px; border-radius: 14px;
+      border: 1px solid rgba(96,165,250,.3);
+      background: linear-gradient(135deg, rgba(96,165,250,.25), rgba(167,139,250,.2));
+      color: #93c5fd; font-size: 14px; font-weight: 600;
+      font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all .2s;
+      letter-spacing: .3px;
+    }
+    .btn-primary:active { opacity: .8; transform: scale(.98); }
+    .btn-secondary {
+      width: 100%; padding: 13px; border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.04); color: #64748b;
+      font-size: 14px; font-weight: 500;
+      font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all .2s; margin-top: 8px;
+    }
+    .btn-secondary:active { opacity: .8; }
+    .btn-ics {
+      width: 100%; padding: 14px; border-radius: 14px;
+      border: 1px solid rgba(251,191,36,.3);
+      background: rgba(251,191,36,.08); color: var(--gold);
+      font-size: 13px; font-weight: 600;
+      font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all .2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px;
+    }
+    .btn-ics:active { opacity: .8; }
+    .btn-danger {
+      background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.25);
+      color: var(--red); border-radius: 10px; padding: 7px 14px;
+      font-size: 12px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer;
+    }
+
+    /* ── Info box ── */
+    .info-box {
+      background: rgba(96,165,250,.06); border: 1px solid rgba(96,165,250,.15);
+      border-radius: 12px; padding: 12px 14px;
+      font-size: 12px; color: var(--muted); line-height: 1.7; margin-bottom: 16px;
+    }
+
+    /* ── Divider ── */
+    .divider { border: none; border-top: 1px solid rgba(255,255,255,.05); margin: 16px 0; }
+
+    /* ── Empty state ── */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--dim); font-size: 13px; line-height: 1.8; }
+
+    /* ── Bottom nav ── */
+    .bottom-nav {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: rgba(5,11,24,.9); backdrop-filter: blur(30px);
+      border-top: 1px solid rgba(255,255,255,.07);
+      display: flex; padding: 8px 16px;
+      padding-bottom: calc(10px + var(--safe-bottom));
+      z-index: 10; flex-shrink: 0;
+    }
+    .bt {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 6px 4px; border: none; background: transparent;
+      color: var(--dim); font-size: 10px;
+      font-family: 'DM Sans', sans-serif; cursor: pointer; border-radius: 10px; transition: all .2s;
+    }
+    .bt.active { color: var(--blue); }
+    .bt-icon { font-size: 20px; line-height: 1; }
+
+    /* ── Modal overlay ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(5,11,24,.85); backdrop-filter: blur(12px);
+      display: flex; align-items: flex-end; justify-content: center;
+      animation: fadeIn .2s ease;
+    }
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+    .modal-sheet {
+      width: 100%; max-width: 430px;
+      background: #0d1829;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 24px 24px 0 0;
+      padding: 20px 20px calc(20px + var(--safe-bottom));
+      animation: slideUp .25s ease;
+      max-height: 85vh; overflow-y: auto;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-handle { width: 36px; height: 4px; background: rgba(255,255,255,.15); border-radius: 2px; margin: 0 auto 20px; }
+    .modal-title { font-size: 13px; font-weight: 600; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px; }
+
+    /* ── Detail modal ── */
+    .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .detail-row:last-of-type { border-bottom: none; }
+    .detail-key { font-size: 12px; color: var(--muted); }
+    .detail-val { font-size: 14px; font-weight: 500; color: var(--text); font-family: 'DM Mono', monospace; }
+
+    .toast {
+      position: fixed; bottom: calc(90px + var(--safe-bottom)); left: 50%; transform: translateX(-50%);
+      background: rgba(30,40,60,.95); border: 1px solid rgba(255,255,255,.15);
+      border-radius: 12px; padding: 10px 18px;
+      font-size: 13px; color: var(--text); z-index: 300;
+      animation: toastIn .3s ease; white-space: nowrap;
+      backdrop-filter: blur(20px);
+    }
+    @keyframes toastIn { from { opacity:0; transform: translate(-50%,10px); } to { opacity:1; transform: translate(-50%,0); } }
+
+    /* ── Stat number ── */
+    .stat-num {
+      font-size: 38px; font-weight: 300; letter-spacing: -1.5px;
+      font-family: 'DM Mono', monospace;
+      background: linear-gradient(90deg, #e2eaf8, #93c5fd);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1;
+    }
+    .stat-currency { font-size: 15px; font-weight: 500; color: var(--blue); margin-left: 2px; font-family: 'DM Mono', monospace; }
+
+    /* ── Card option in modal ── */
+    .card-option {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 16px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px; cursor: pointer; transition: all .18s; margin-bottom: 8px;
+      width: 100%;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .card-option-left { display: flex; align-items: center; gap: 10px; }
+    .card-option-name { font-size: 14px; font-weight: 500; color: #94a3b8; }
+    .card-option-check { font-size: 16px; }
+    .add-custom-btn {
+      width: 100%; padding: 12px 16px;
+      background: rgba(255,255,255,.04);
+      border: 1px dashed rgba(255,255,255,.12);
+      border-radius: 14px; color: var(--muted);
+      font-size: 13px; font-weight: 500;
+      font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all .18s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+
+    /* file input hidden */
+    #file-import { display: none; }
+
+    /* ── Flex helpers ── */
+    .flex { display: flex; }
+    .flex-center { display: flex; align-items: center; }
+    .gap-6 { gap: 6px; }
+    .gap-8 { gap: 8px; }
+    .mt-4 { margin-top: 4px; }
+    .mt-5 { margin-top: 5px; }
+
+    /* ── Edit form inline ── */
+    .edit-actions { display: flex; gap: 8px; margin-top: 16px; }
+    .edit-actions .btn-primary { flex: 1; margin-top: 0; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">✦</div>
+      <span class="logo-text">Night Sky</span>
+    </div>
+    <div class="date-pill" id="date-display"></div>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="content" id="content"></div>
+  <nav class="bottom-nav" id="bottom-nav"></nav>
+</div>
+<input type="file" id="file-import" accept=".json" />
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONSTANTS & PALETTE
+// ═══════════════════════════════════════════════════
+const PALETTE = [
+  { bg:'rgba(96,165,250,.14)',  border:'rgba(96,165,250,.38)',  text:'#60a5fa', dot:'#60a5fa'  },
+  { bg:'rgba(52,211,153,.12)',  border:'rgba(52,211,153,.38)',  text:'#34d399', dot:'#34d399'  },
+  { bg:'rgba(251,191,36,.12)',  border:'rgba(251,191,36,.33)',  text:'#fbbf24', dot:'#fbbf24'  },
+  { bg:'rgba(167,139,250,.14)', border:'rgba(167,139,250,.38)', text:'#a78bfa', dot:'#a78bfa'  },
+  { bg:'rgba(248,113,113,.12)', border:'rgba(248,113,113,.33)', text:'#f87171', dot:'#f87171'  },
+  { bg:'rgba(251,146,60,.12)',  border:'rgba(251,146,60,.33)',  text:'#fb923c', dot:'#fb923c'  },
+  { bg:'rgba(34,211,238,.12)',  border:'rgba(34,211,238,.33)',  text:'#22d3ee', dot:'#22d3ee'  },
+  { bg:'rgba(232,121,249,.12)', border:'rgba(232,121,249,.33)', text:'#e879f9', dot:'#e879f9'  },
+];
+
+const DEFAULT_CARDS = ['國泰 CUBE','玉山 Pi','永豐幣倍卡','台新 Richart','中信 LINE Pay'];
+
+const ITEM_ICONS = {
+  netflix:'🎬', hbo:'🎬', disney:'🎬', apple:'🍎', icloud:'☁️',
+  spotify:'🎵', kkbox:'🎵', youtube:'▶️', adobe:'🎨', figma:'🎨',
+  chatgpt:'🤖', openai:'🤖', notion:'📝', dropbox:'📦', github:'🐱',
+  google:'🔍', amazon:'📦', microsoft:'🪟', office:'🪟', zoom:'💬',
+  slack:'💬',網域:'🌐', domain:'🌐', 防毒:'🛡️', 保險:'🛡️',
+};
+function getIcon(name) {
+  const n = name.toLowerCase();
+  for (const [k,v] of Object.entries(ITEM_ICONS)) if (n.includes(k)) return v;
+  return '💳';
+}
+
+// ═══════════════════════════════════════════════════
+// STATE  (localStorage)
+// ═══════════════════════════════════════════════════
+let state = {
+  items: [],
+  cards: [...DEFAULT_CARDS],
+  nextId: 1,
+};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('nightsky-v1');
+    if (raw) state = JSON.parse(raw);
+  } catch(e) {}
+}
+function saveState() {
+  localStorage.setItem('nightsky-v1', JSON.stringify(state));
+}
+loadState();
+
+// ═══════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════
+function getCardMap() {
+  const map = {};
+  state.cards.forEach((c, i) => { map[c] = PALETTE[i % PALETTE.length]; });
+  return map;
+}
+
+function today() { return new Date(); }
+
+function formatDatePill(d) {
+  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function cycleLabelOf(item) {
+  if (item.cycle === 'monthly') return `每月 ${item.day} 號`;
+  const d = new Date(item.date);
+  return `每年 ${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function isTodayItem(item) {
+  const t = today();
+  if (item.cycle === 'monthly') return item.day === t.getDate();
+  const d = new Date(item.date);
+  return d.getDate() === t.getDate() && d.getMonth() === t.getMonth();
+}
+
+function cardBadgeHTML(card, cardMap) {
+  if (!card) return '';
+  const c = cardMap[card] || PALETTE[0];
+  return `<span class="card-badge" style="background:${c.bg};border:1px solid ${c.border};color:${c.text};">
+    <span class="card-badge-dot" style="background:${c.dot};"></span>${escHtml(card)}
+  </span>`;
+}
+
+function escHtml(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function listRowHTML(item, cardMap) {
+  const cyBadge = item.cycle === 'monthly'
+    ? `<span class="cycle-badge badge-m">每月</span>`
+    : `<span class="cycle-badge badge-y">每年</span>`;
+  return `
+    <div class="list-row" data-id="${item.id}" onclick="showDetail(${item.id})">
+      <div class="row-icon ${item.cycle==='monthly'?'icon-m':'icon-y'}">${getIcon(item.name)}</div>
+      <div class="row-info">
+        <div class="row-name">${escHtml(item.name)}</div>
+        <div class="row-meta">
+          <span class="row-date">${cycleLabelOf(item)}</span>
+          ${cardBadgeHTML(item.card, cardMap)}
+        </div>
+      </div>
+      <div class="row-right">
+        <div class="row-amount">TWD ${Number(item.amount).toLocaleString()}</div>
+        <div style="margin-top:5px;display:flex;justify-content:flex-end;">${cyBadge}</div>
+      </div>
+    </div>`;
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2200);
+}
+
+// ═══════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════
+const TABS = ['概覽','清單','新增','備份'];
+const ICONS = ['✦','≡','＋','↑↓'];
+let activeTab = 0;
+
+function renderTabs() {
+  document.getElementById('tabs').innerHTML = TABS.map((t,i) =>
+    `<button class="tab ${i===activeTab?'active':''}" onclick="switchTab(${i})">${t}</button>`
+  ).join('');
+  document.getElementById('bottom-nav').innerHTML = TABS.map((t,i) =>
+    `<button class="bt ${i===activeTab?'active':''}" onclick="switchTab(${i})">
+      <span class="bt-icon">${ICONS[i]}</span>${t}
+    </button>`
+  ).join('');
+}
+
+function switchTab(i) {
+  activeTab = i; renderTabs(); renderContent();
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER CONTENT
+// ═══════════════════════════════════════════════════
+function renderContent() {
+  const c = document.getElementById('content');
+  if (activeTab === 0) c.innerHTML = renderOverview();
+  else if (activeTab === 1) c.innerHTML = renderList();
+  else if (activeTab === 2) c.innerHTML = renderAdd();
+  else c.innerHTML = renderBackup();
+}
+
+// ─── Overview ─────────────────────────────────────
+function renderOverview() {
+  const cardMap = getCardMap();
+  const t = today();
+  const thisMonth = t.getMonth() + 1;
+
+  const monthly = state.items.filter(i => i.cycle === 'monthly');
+  const monthlyTotal = monthly.reduce((s,i) => s + Number(i.amount), 0);
+  const todayItems = state.items.filter(isTodayItem);
+  const yearlyThisMonth = state.items.filter(i => i.cycle==='yearly' && new Date(i.date).getMonth()+1===thisMonth);
+
+  // per-card totals
+  const cardTotals = {};
+  monthly.forEach(i => { cardTotals[i.card] = (cardTotals[i.card]||0) + Number(i.amount); });
+  const maxT = Math.max(...Object.values(cardTotals), 1);
+
+  let html = '';
+
+  // today alert
+  if (todayItems.length > 0) {
+    html += `<div class="glass glow-alert">
+      <div class="flex-center gap-8" style="margin-bottom:14px;">
+        <span class="pulse-dot"></span>
+        <span style="font-size:13px;font-weight:600;color:#fbbf24;letter-spacing:.3px;">今天扣款 · ${todayItems.length} 筆</span>
+      </div>`;
+    todayItems.forEach(item => {
+      html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+        <div>
+          <div style="font-size:14px;font-weight:500;color:#e2eaf8;margin-bottom:5px;">${escHtml(item.name)}</div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span style="font-size:11px;color:#64748b;font-family:'DM Mono',monospace;">${cycleLabelOf(item)}</span>
+            ${cardBadgeHTML(item.card, cardMap)}
+          </div>
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:15px;font-weight:500;color:#fbbf24;">TWD ${Number(item.amount).toLocaleString()}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // main total
+  html += `<div class="glass glow-blue">
+    <div class="label">本月每月扣款總額</div>
+    <div class="flex-center gap-8">
+      <div class="stat-num">${monthlyTotal.toLocaleString()}</div>
+      <span class="stat-currency">TWD</span>
+    </div>
+    <div style="font-size:12px;color:#475569;margin-top:8px;">${monthly.length} 筆固定訂閱</div>
+  </div>`;
+
+  // mini grid
+  html += `<div class="summary-grid">
+    <div class="mini-card"><div class="mini-val">${monthly.length}</div><div class="mini-label">每月扣款筆數</div></div>
+    <div class="mini-card" ${yearlyThisMonth.length>0?'style="border-color:rgba(167,139,250,.3);"':''}>
+      <div class="mini-val" style="color:#a78bfa;">${yearlyThisMonth.length}</div>
+      <div class="mini-label">本月年度扣款</div>
+    </div>
+  </div>`;
+
+  // card breakdown
+  if (Object.keys(cardTotals).length > 0) {
+    html += `<div class="glass"><div class="label" style="margin-bottom:14px;">各卡本月月扣小計</div>`;
+    Object.entries(cardTotals).forEach(([card, total]) => {
+      const c = cardMap[card] || PALETTE[0];
+      const pct = (total / maxT) * 100;
+      html += `<div class="card-sum-row">
+        ${cardBadgeHTML(card, cardMap)}
+        <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${c.dot};opacity:.65;"></div></div>
+        <div class="bar-amount">TWD ${total.toLocaleString()}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (yearlyThisMonth.length > 0) {
+    html += `<div class="sec-title">本月年度扣款</div>`;
+    yearlyThisMonth.forEach(i => { html += listRowHTML(i, cardMap); });
+  }
+
+  if (monthly.length > 0) {
+    html += `<div class="sec-title">每月固定扣款</div>`;
+    monthly.sort((a,b) => a.day - b.day).forEach(i => { html += listRowHTML(i, cardMap); });
+  }
+
+  if (state.items.length === 0) {
+    html += `<div class="empty-state">✦<br><br>還沒有扣款資料<br>前往「新增」頁面加入第一筆</div>`;
+  }
+
+  return html;
+}
+
+// ─── List ──────────────────────────────────────────
+let listSearch = '';
+let listCardFilter = '全部';
+
+function renderList() {
+  const cardMap = getCardMap();
+  const allCards = [...new Set(state.items.map(i=>i.card).filter(Boolean))];
+
+  const filtered = state.items.filter(i => {
+    const ms = i.name.toLowerCase().includes(listSearch.toLowerCase());
+    const mc = listCardFilter === '全部' || i.card === listCardFilter;
+    return ms && mc;
+  });
+  const monthly = filtered.filter(i => i.cycle==='monthly').sort((a,b) => a.day-b.day);
+  const yearly  = filtered.filter(i => i.cycle==='yearly');
+
+  let html = `<input class="search-bar" id="list-search" placeholder="🔍  搜尋扣款名稱…" value="${escHtml(listSearch)}" oninput="onListSearch(this.value)" />`;
+
+  // filter strip
+  html += `<div class="card-strip">`;
+  ['全部', ...allCards].forEach(c => {
+    const isActive = listCardFilter === c;
+    const col = c !== '全部' ? (cardMap[c]||PALETTE[0]) : null;
+    const style = isActive && col
+      ? `style="background:${col.bg};border-color:${col.border};color:${col.text};"`
+      : isActive ? 'style="background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.22);color:#e2eaf8;"' : '';
+    const dot = col ? `<span style="width:6px;height:6px;border-radius:50%;background:${col.dot};display:inline-block;"></span>` : '';
+    html += `<button class="cf-btn" ${style} onclick="onCardFilter('${escHtml(c)}')">${dot}${escHtml(c)}</button>`;
+  });
+  html += `</div>`;
+
+  if (filtered.length === 0) html += `<div class="empty-state">找不到符合的項目</div>`;
+
+  if (monthly.length > 0) {
+    html += `<div class="sec-title">每月扣款</div>`;
+    monthly.forEach(i => { html += listRowHTML(i, cardMap); });
+  }
+  if (yearly.length > 0) {
+    html += `<div class="sec-title">每年扣款</div>`;
+    yearly.forEach(i => { html += listRowHTML(i, cardMap); });
+  }
+
+  return html;
+}
+
+function onListSearch(v) { listSearch = v; document.getElementById('content').innerHTML = renderList(); }
+function onCardFilter(c) { listCardFilter = c; document.getElementById('content').innerHTML = renderList(); }
+
+// ─── Add / Edit ────────────────────────────────────
+let addCycle = 'monthly';
+let addCard  = '';
+let editingId = null;
+
+function renderAdd(prefill) {
+  const p = prefill || {};
+  const cyM = (p.cycle||addCycle) === 'monthly';
+
+  let html = `<div class="glass">
+    <div class="form-group">
+      <div class="form-label">扣款週期</div>
+      <div class="cycle-toggle">
+        <button class="cycle-btn ${cyM?'active-m':''}" onclick="setAddCycle('monthly')">📅 每月扣款</button>
+        <button class="cycle-btn ${!cyM?'active-y':''}" onclick="setAddCycle('yearly')">🗓 每年扣款</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">扣款名稱</label>
+      <input class="form-input" id="inp-name" placeholder="例：Netflix、iCloud" value="${escHtml(p.name||'')}" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">金額（TWD）</label>
+      <input class="form-input" id="inp-amount" type="number" placeholder="0" value="${escHtml(p.amount||'')}"/>
+    </div>`;
+
+  if (cyM) {
+    html += `<div class="form-group">
+      <label class="form-label">每月扣款日</label>
+      <select class="form-select" id="inp-day">
+        ${Array.from({length:31},(_,i)=>i+1).map(d=>`<option value="${d}" ${(p.day||1)==d?'selected':''}>${d} 號</option>`).join('')}
+      </select>
+    </div>`;
+  } else {
+    html += `<div class="form-group">
+      <label class="form-label">年度扣款日期</label>
+      <input class="form-input" id="inp-date" type="date" style="color-scheme:dark;" value="${escHtml(p.date||'')}"/>
+    </div>`;
+  }
+
+  const cardMap = getCardMap();
+  const selectedCard = p.card || addCard;
+  html += `<div class="form-group">
+    <label class="form-label">信用卡別</label>
+    <button class="card-trigger" onclick="openCardModal()">
+      ${selectedCard ? cardBadgeHTML(selectedCard, cardMap) : '<span class="card-trigger-placeholder">選擇信用卡…</span>'}
+      <span style="color:#475569;font-size:12px;">▼</span>
+    </button>
+  </div>`;
+
+  if (editingId) {
+    html += `<div class="edit-actions">
+      <button class="btn-primary" onclick="saveItem()">✓ 儲存變更</button>
+      <button class="btn-danger" onclick="deleteItem(${editingId})">刪除</button>
+    </div>
+    <button class="btn-secondary" onclick="cancelEdit()">取消</button>`;
+  } else {
+    html += `<button class="btn-primary" onclick="saveItem()">＋ 新增扣款</button>`;
+  }
+
+  html += `</div>`;
+  html += `<div class="info-box">💡 找不到你的卡？在選單內可「新增自訂卡別」。資料僅存於本機，不會上傳。</div>`;
+
+  return html;
+}
+
+function setAddCycle(c) {
+  addCycle = c;
+  document.getElementById('content').innerHTML = renderAdd(captureFormValues());
+}
+
+function captureFormValues() {
+  const p = {};
+  const n = document.getElementById('inp-name');   if(n)  p.name   = n.value;
+  const a = document.getElementById('inp-amount'); if(a)  p.amount = a.value;
+  const d = document.getElementById('inp-day');    if(d)  p.day    = Number(d.value);
+  const dt= document.getElementById('inp-date');   if(dt) p.date   = dt.value;
+  p.cycle = addCycle;
+  p.card  = addCard;
+  return p;
+}
+
+function saveItem() {
+  const name   = document.getElementById('inp-name')?.value?.trim();
+  const amount = Number(document.getElementById('inp-amount')?.value);
+  if (!name)   { showToast('⚠️ 請輸入扣款名稱'); return; }
+  if (!amount) { showToast('⚠️ 請輸入金額'); return; }
+
+  if (editingId) {
+    const idx = state.items.findIndex(i => i.id === editingId);
+    if (idx !== -1) {
+      state.items[idx] = {
+        ...state.items[idx], name, amount,
+        cycle: addCycle,
+        day:   addCycle==='monthly' ? Number(document.getElementById('inp-day')?.value||1) : undefined,
+        date:  addCycle==='yearly'  ? document.getElementById('inp-date')?.value : undefined,
+        card:  addCard,
+      };
+    }
+    editingId = null;
+    showToast('✓ 已儲存');
+  } else {
+    const item = {
+      id: state.nextId++, name, amount,
+      cycle: addCycle,
+      day:   addCycle==='monthly' ? Number(document.getElementById('inp-day')?.value||1) : undefined,
+      date:  addCycle==='yearly'  ? document.getElementById('inp-date')?.value : undefined,
+      card:  addCard,
+    };
+    state.items.push(item);
+    showToast('✓ 已新增：' + name);
+  }
+  addCard = '';
+  saveState();
+  switchTab(0);
+}
+
+function deleteItem(id) {
+  if (!confirm('確定刪除這筆扣款？')) return;
+  state.items = state.items.filter(i => i.id !== id);
+  editingId = null; addCard = '';
+  saveState();
+  showToast('已刪除');
+  switchTab(0);
+}
+
+function cancelEdit() { editingId = null; addCard = ''; switchTab(0); }
+
+// ─── Detail modal ──────────────────────────────────
+function showDetail(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  const cardMap = getCardMap();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `<div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-size:20px;">${getIcon(item.name)}</div>
+      <div style="font-size:16px;font-weight:600;color:#e2eaf8;flex:1;margin:0 12px;">${escHtml(item.name)}</div>
+      <span class="${item.cycle==='monthly'?'cycle-badge badge-m':'cycle-badge badge-y'}">${item.cycle==='monthly'?'每月':'每年'}</span>
+    </div>
+    <div class="detail-row"><span class="detail-key">金額</span><span class="detail-val">TWD ${Number(item.amount).toLocaleString()}</span></div>
+    <div class="detail-row"><span class="detail-key">扣款時間</span><span class="detail-val">${cycleLabelOf(item)}</span></div>
+    <div class="detail-row"><span class="detail-key">信用卡</span><span>${cardBadgeHTML(item.card, cardMap)}</span></div>
+    <div style="margin-top:18px;display:flex;gap:8px;">
+      <button class="btn-primary" style="flex:1;" onclick="startEdit(${id})">✎ 編輯</button>
+      <button class="btn-danger" onclick="deleteItem(${id});closeModal();">刪除</button>
+    </div>
+    <button class="btn-secondary" onclick="closeModal()">關閉</button>
+  </div>`;
+  overlay.addEventListener('click', closeModal);
+  document.body.appendChild(overlay);
+}
+
+function closeModal() {
+  document.querySelector('.modal-overlay')?.remove();
+}
+
+function startEdit(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  closeModal();
+  editingId = id;
+  addCycle  = item.cycle;
+  addCard   = item.card || '';
+  activeTab = 2;
+  renderTabs();
+  document.getElementById('content').innerHTML = renderAdd(item);
+}
+
+// ─── Card modal ────────────────────────────────────
+function openCardModal() {
+  const cardMap = getCardMap();
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+
+  function buildSheet() {
+    return `<div class="modal-sheet" id="card-sheet" onclick="event.stopPropagation()">
+      <div class="modal-handle"></div>
+      <div class="modal-title">選擇信用卡</div>
+      ${state.cards.map(card => {
+        const c = cardMap[card]||PALETTE[0];
+        const sel = addCard === card;
+        return `<button class="card-option" style="${sel?`background:${c.bg};border-color:${c.border};`:''}"
+          onclick="selectCard('${escHtml(card)}')">
+          <div class="card-option-left">
+            <span style="width:10px;height:10px;border-radius:50%;background:${c.dot};display:inline-block;${sel?`box-shadow:0 0 8px ${c.dot};`:''}"></span>
+            <span class="card-option-name" style="${sel?`color:${c.text};`:''}">${escHtml(card)}</span>
+          </div>
+          ${sel ? `<span class="card-option-check" style="color:${c.text};">✓</span>` : ''}
+        </button>`;
+      }).join('')}
+      <div id="custom-card-area">
+        <button class="add-custom-btn" onclick="showCustomInput()">＋ 新增自訂卡別</button>
+      </div>
+    </div>`;
+  }
+
+  overlay.innerHTML = buildSheet();
+  overlay.addEventListener('click', () => { overlay.remove(); renderContent(); });
+  document.body.appendChild(overlay);
+}
+
+function selectCard(card) {
+  addCard = card;
+  document.querySelector('.modal-overlay')?.remove();
+  document.getElementById('content').innerHTML = renderAdd(captureFormValues());
+}
+
+function showCustomInput() {
+  const area = document.getElementById('custom-card-area');
+  if (!area) return;
+  area.innerHTML = `<div style="display:flex;gap:8px;margin-top:4px;">
+    <input id="custom-card-inp" class="form-input" placeholder="輸入卡名，例：聯邦賴點卡" style="flex:1;" autofocus />
+    <button onclick="addCustomCard()" style="padding:11px 18px;background:rgba(96,165,250,.2);border:1px solid rgba(96,165,250,.35);border-radius:12px;color:#60a5fa;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">新增</button>
+  </div>`;
+  setTimeout(() => document.getElementById('custom-card-inp')?.focus(), 50);
+}
+
+function addCustomCard() {
+  const val = document.getElementById('custom-card-inp')?.value?.trim();
+  if (!val) return;
+  if (!state.cards.includes(val)) state.cards.push(val);
+  saveState();
+  addCard = val;
+  document.querySelector('.modal-overlay')?.remove();
+  document.getElementById('content').innerHTML = renderAdd(captureFormValues());
+}
+
+// ─── Backup ────────────────────────────────────────
+function renderBackup() {
+  return `
+    <div class="glass">
+      <div class="label" style="margin-bottom:16px;">iOS 行事曆提醒</div>
+      <button class="btn-ics" onclick="exportICS()">📅 匯出 iOS 行事曆提醒（.ics）</button>
+      <div class="info-box" style="margin-bottom:0;">
+        每月扣款 → 未來 12 個月事件<br/>
+        每年扣款 → 未來 5 年事件<br/>
+        29/30/31 號遇短月自動改月底<br/>
+        匯出後手動匯入 iOS 行事曆 App
+      </div>
+    </div>
+    <hr class="divider"/>
+    <div class="glass">
+      <div class="label" style="margin-bottom:16px;">資料備份</div>
+      <button class="btn-primary" onclick="exportJSON()">⬇ 匯出 JSON 備份</button>
+      <button class="btn-secondary" onclick="document.getElementById('file-import').click()">⬆ 匯入 JSON 備份</button>
+    </div>
+    <div class="info-box">🔐 資料僅存於本機 localStorage，不會傳送到任何伺服器。</div>`;
+}
+
+// ─── ICS export ────────────────────────────────────
+function pad(n) { return String(n).padStart(2,'0'); }
+
+function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+
+function fmtICSDate(d) {
+  return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`;
+}
+
+function makeUID() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}@nightsky`;
+}
+
+function exportICS() {
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Night Sky//Deduction Manager//TW',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+  ];
+
+  const now = new Date();
+  const nowStr = `${fmtICSDate(now)}T${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}Z`;
+
+  state.items.forEach(item => {
+    const title = `扣款：${item.name}（TWD ${Number(item.amount).toLocaleString()}）${item.card ? ' · ' + item.card : ''}`;
+
+    if (item.cycle === 'monthly') {
+      // Generate next 12 months
+      for (let offset = 0; offset < 12; offset++) {
+        const base = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+        const yr = base.getFullYear();
+        const mo = base.getMonth() + 1;
+        const maxDay = daysInMonth(yr, mo);
+        let useDay = item.day;
+        let note = '';
+        if (useDay > maxDay) { useDay = maxDay; note = `（本月無 ${item.day} 號，改月底提醒）`; }
+        const d = new Date(yr, mo-1, useDay);
+        if (d < now) continue;
+        const dStr = fmtICSDate(d);
+        lines.push(
+          'BEGIN:VEVENT',
+          `UID:${makeUID()}`,
+          `DTSTAMP:${nowStr}`,
+          `DTSTART;TZID=Asia/Taipei:${dStr}T090000`,
+          `DTEND;TZID=Asia/Taipei:${dStr}T093000`,
+          `SUMMARY:${title}`,
+          `DESCRIPTION:${note}`,
+          'BEGIN:VALARM',
+          'TRIGGER:-PT0M',
+          'ACTION:DISPLAY',
+          `DESCRIPTION:${title}`,
+          'END:VALARM',
+          'END:VEVENT'
+        );
+      }
+    } else {
+      // yearly: generate 5 occurrences
+      const base = new Date(item.date);
+      const mo   = base.getMonth() + 1;
+      const day  = base.getDate();
+      let startYear = now.getFullYear();
+      if (new Date(startYear, mo-1, day) < now) startYear++;
+      for (let y = startYear; y < startYear + 5; y++) {
+        const d = new Date(y, mo-1, day);
+        const dStr = fmtICSDate(d);
+        lines.push(
+          'BEGIN:VEVENT',
+          `UID:${makeUID()}`,
+          `DTSTAMP:${nowStr}`,
+          `DTSTART;TZID=Asia/Taipei:${dStr}T090000`,
+          `DTEND;TZID=Asia/Taipei:${dStr}T093000`,
+          `SUMMARY:${title}`,
+          'DESCRIPTION:',
+          'BEGIN:VALARM',
+          'TRIGGER:-PT0M',
+          'ACTION:DISPLAY',
+          `DESCRIPTION:${title}`,
+          'END:VALARM',
+          'END:VEVENT'
+        );
+      }
+    }
+  });
+
+  lines.push('END:VCALENDAR');
+  const blob = new Blob([lines.join('\r\n')], { type:'text/calendar;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'nightsky-deductions.ics';
+  a.click();
+  showToast('📅 .ics 已匯出');
+}
+
+// ─── JSON backup ───────────────────────────────────
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'nightsky-backup.json';
+  a.click();
+  showToast('⬇ JSON 備份已匯出');
+}
+
+document.getElementById('file-import').addEventListener('change', function(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.items && Array.isArray(data.items)) {
+        state = data; saveState(); renderContent();
+        showToast('✓ 匯入成功，共 ' + state.items.length + ' 筆');
+      } else throw new Error();
+    } catch { showToast('⚠️ 檔案格式錯誤'); }
+  };
+  r.readAsText(f);
+  this.value = '';
+});
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+document.getElementById('date-display').textContent = formatDatePill(today());
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js').catch(() => {});
+}
+
+renderTabs();
+renderContent();
+</script>
+</body>
+</html>
