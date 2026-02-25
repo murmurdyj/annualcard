@@ -943,7 +943,7 @@ function exportICS() {
 
   function addEvent(dStr, title, desc) {
     lines.push('BEGIN:VEVENT', `UID:${makeUID()}`, `DTSTAMP:${nowStr}`,
-      `DTSTART;TZID=Asia/Taipei:${dStr}T090000`, `DTEND;TZID=Asia/Taipei:${dStr}T093000`,
+      `DTSTART;TZID=Asia/Taipei:${dStr}T223000`, `DTEND;TZID=Asia/Taipei:${dStr}T230000`,
       `SUMMARY:${title}`, `DESCRIPTION:${desc||''}`,
       'BEGIN:VALARM','TRIGGER:-PT0M','ACTION:DISPLAY',`DESCRIPTION:${title}`,'END:VALARM','END:VEVENT');
   }
