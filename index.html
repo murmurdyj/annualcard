@@ -942,11 +942,13 @@ function exportICS() {
   const nowStr = `${fmtICSDate(now)}T${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}Z`;
 
   function addEvent(dStr, title, desc) {
-lines.push('BEGIN:VEVENT', `UID:${makeUID()}`, `DTSTAMP:${nowStr}`,
-      `DTSTART;TZID=Asia/Taipei:${dStr}T223000`,
-      `DTEND;TZID=Asia/Taipei:${dStr}T230000`,
+    // Event is all-day; alarm fires at 21:00 the evening before (780 min = 13 hrs before midnight)
+    // This is the most reliable notification pattern on iOS Calendar
+    lines.push('BEGIN:VEVENT', `UID:${makeUID()}`, `DTSTAMP:${nowStr}`,
+      `DTSTART;VALUE=DATE:${dStr}`,
+      `DTEND;VALUE=DATE:${dStr}`,
       `SUMMARY:${title}`, `DESCRIPTION:${desc||''}`,
-      'BEGIN:VALARM', 'TRIGGER:-PT0M', 'ACTION:DISPLAY', `DESCRIPTION:${title}`, 'END:VALARM', 'END:VEVENT');
+      'BEGIN:VALARM','TRIGGER:-PT900M','ACTION:DISPLAY',`DESCRIPTION:${title}`,'END:VALARM','END:VEVENT');
   }
 
   state.items.forEach(item => {
